@@ -1,0 +1,58 @@
+﻿@*
+@using Microsoft.AspNetCore.Identity
+@using MusicStoreB2C.Models
+*@
+
+@using System.Security.Principal
+
+@if (User.Identity.IsAuthenticated)
+{
+    <ul class="nav navbar-nav navbar-right">
+        <li>@Html.ActionLink("Hello, " + @User.Identity.Name, "Index", "Manage", new { area = "" }, null)</li>
+        <li>@Html.ActionLink("Log Out", "LogOff", "Account", new { area = "" }, null)</li>
+    </ul>
+}
+else
+{
+    <ul class="nav navbar-nav navbar-right">
+        <li>@Html.ActionLink("Sign In", "SignIn", "Account", new { area = "" }, null)</li>
+        <li>@Html.ActionLink("Sign Up", "SignUp", "Account", new { area = "" }, null)</li>
+        <li>@Html.ActionLink("Sign Up/In", "SignUpOrIn", "Account", new { area = "" }, null)</li>
+    </ul>
+}
+
+@*
+    @inject SignInManager<ApplicationUser> SignInManager
+    @inject UserManager<ApplicationUser> UserManager
+
+
+
+    @if (SignInManager.IsSignedIn(User))
+    {
+    <form asp-area="" asp-controller="Account" asp-action="LogOff" method="post" id="logoutForm" class="navbar-right">
+        <ul class="nav navbar-nav navbar-right">
+            <li>
+                <a asp-area="" asp-controller="Manage" asp-action="Index" title="Manage">Hello @UserManager.GetUserName(User)!</a>
+            </li>
+            <li><a href="javascript:document.getElementById('logoutForm').submit()">Log off</a></li>
+        </ul>
+    </form>
+    }
+    else if (User.Identity.IsAuthenticated)
+    {
+        <ul class="nav navbar-nav navbar-right">
+            <li class="navbar-text">Hello @User.Identity.Name!</li>
+            <li><a asp-area="" asp-controller="MSAccount" asp-action="SignOut">Sign Out</a></li>
+        </ul>
+    }
+    else
+    {
+        <ul class="nav navbar-nav navbar-right">
+            <li><a id="registerLink" asp-controller="MSAccount" asp-action="Register">Register</a></li>
+            <li><a id="loginLink" asp-controller="MSAccount" asp-action="Login">Log in</a></li>
+            <li><a asp-area="" asp-controller="MSAccount" asp-action="Signin">Sign in</a></li>
+        </ul>
+    }
+*@
+
+

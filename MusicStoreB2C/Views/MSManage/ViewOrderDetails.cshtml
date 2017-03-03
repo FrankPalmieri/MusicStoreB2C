@@ -1,0 +1,67 @@
+@model MusicStore.ViewModels.ViewOrderDetailsViewModel
+@{
+    ViewBag.Title = "View Order History";
+}
+
+<h3>
+    <em>Review</em> your Orders:
+</h3>
+<div id="update-message">
+</div>
+<table id="cart-summary" class="table table-bordered table-responsive table-hover table-striped">
+    <tr>
+        <th>
+            Order Detail ID
+        </th>
+        <th>
+            Album Title
+        </th>
+        <th>
+            Artist
+        </th>
+        <th>
+            Genre
+        </th>
+        <th>
+            Quantity
+        </th>
+        <th>
+            Unit Price
+        </th>
+    </tr>
+    @foreach (var item in Model.OrderDetails)
+    {
+        <tr id="row-@item.OrderId">
+            <td>
+                @item.OrderDetailId
+            </td>
+            <td>
+                <a asp-controller="Store" asp-action="Details" asp-route-id="@item.AlbumId">@item.Album.Title</a>
+            </td>
+            <td>
+                @item.Album.Artist.Name
+            </td>
+            <td>
+                @item.Album.Genre.Name 
+            </td>
+            <td>
+                @item.Quantity 
+            </td>
+            <td>
+                @item.UnitPrice 
+            </td>
+        </tr>
+    }
+    <tr>
+        <td>
+            <b>Total</b>
+        </td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td id="cart-total">
+            <b>@Model.OrderTotal</b>
+        </td>
+    </tr>
+</table>

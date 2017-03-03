@@ -1,0 +1,35 @@
+﻿{
+  // Copy this to config.local.json and configure git to ignore local.json files so
+  // details are not checked into git
+  // "AzureAd": {
+  //  "ClientId": "<Get ClientId from Azure AD B2C in portal",
+  //  "ClientSecret": "<create secret through portal or maybe through Powershell",
+  //  "Tenant": "<Get from B2C Config>.onmicrosoft.com",
+  //  "AadInstance": "https://login.microsoftonline.com/{0}/v2.0/.well-known/openid-configuration?p={1}", // This is the public instance of Azure AD
+  //  "PostLogoutRedirectUri": "This comes from either dev (i.e. https://localhost:<portnumber>) or from deployed location",
+  //  "RedirectUri": "same as above",
+  //  "GraphResourceId": "https://graph.windows.net/",
+  //  "GraphEndpoint": "https://graph.windows.net/",
+  //  "GraphSuffix": "",
+  //  "GraphVersion": "api-version=1.6",
+
+  //  "SignUpPolicyId": "B2C_1_sign_up",
+  //  "SignInPolicyId": "B2C_1_sign_in",
+  //  "SignUpOrInPolicyId": "B2C_1_sign_up_or_sign_in",
+  //  "ProfileEditingPolicyId": "B2C_1_profile_editing",
+  //  "ResetPasswordPolicyId": "B2C_1_forgot_pw"
+  //},
+  "AppSettings": {
+    "SiteTitle": "ASP.NET MVC Music Store",
+    "CacheDbResults": true
+  },
+  "DefaultAdminUsername": "Administrator@test.com",
+  "DefaultAdminPassword": "YouShouldChangeThisPassword1!",
+  "Data": {
+    "DefaultConnection": {
+      // Use a shared (and running) LocalDB database when executing in IIS e.g.
+      // "Server=(localdb)\\.\\IIS_DB;Database=MusicStore;Trusted_Connection=False;MultipleActiveResultSets=true;User ID=iis_login;Password=********"
+      "ConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=MusicStore;Trusted_Connection=True;MultipleActiveResultSets=true;Connect Timeout=30;"
+    }
+  }
+}
