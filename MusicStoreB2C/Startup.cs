@@ -107,17 +107,17 @@ namespace MusicStoreB2C
             services.AddAuthorization(options =>
             {
                 options.AddPolicy(
-                    "MusicStoreAdmin",
+                    "ManageStore",
                     authBuilder =>
                     {
                         authBuilder.RequireClaim("Group", "MusicStoreAdmin");
                     });
-                options.AddPolicy(
-                    "ManageStore",
-                    authBuilder =>
-                    {
-                        authBuilder.RequireClaim("ManageStore", "Allowed");
-                    });
+                //options.AddPolicy(
+                //    "ManageStore",
+                //    authBuilder =>
+                //    {
+                //        authBuilder.RequireClaim("ManageStore", "Allowed");
+                //    });
             });
 
             services.AddSingleton<ITodoRepository, TodoRepository>();
