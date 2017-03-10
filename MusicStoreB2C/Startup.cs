@@ -23,6 +23,7 @@ namespace MusicStoreB2C
         private readonly Platform _platform;
         private readonly ILogger _logger;
         public static ActiveDirB2C adB2C;
+        public static string TaskServiceUrl;
 
         public Startup(IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
@@ -58,9 +59,6 @@ namespace MusicStoreB2C
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            IConfigurationSection blah = Configuration.GetSection("AppSettings");
-            // services.Configure<AppSettings>(blah);
-
             // Add EF services to the services container
             if (_platform.UseInMemoryStore)
             {
@@ -86,6 +84,11 @@ namespace MusicStoreB2C
 
 
             services.AddLogging();
+
+            services.AddRouting(options => 
+            {
+                options.LowercaseUrls = true;
+            });
 
             // Add MVC services to the services container.
             services.AddMvc().AddXmlSerializerFormatters();
@@ -121,6 +124,13 @@ namespace MusicStoreB2C
             });
 
             services.AddSingleton<ITodoRepository, TodoRepository>();
+
+            // http://ardalis.com/how-to-list-all-services-available-to-an-asp-net-core-app
+            _logger.LogDebug($"Total Services Registered: {services.Count}");
+            foreach (var service in services)
+            {
+                _logger.LogDebug($"Service: {service.ServiceType.FullName}\n      Lifetime: {service.Lifetime}\n      Instance: {service.ImplementationType?.FullName}");
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -129,6 +139,8 @@ namespace MusicStoreB2C
             // Add the console logger.
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+
+            TaskServiceUrl = Configuration["api:TaskServiceUrl"];
 
             // StatusCode pages to gracefully handle status codes 400-599.
             app.UseStatusCodePagesWithRedirects("~/Home/StatusCodePage");
@@ -150,8 +162,6 @@ namespace MusicStoreB2C
 
             // Configure the OWIN pipeline to use cookie auth.
             app.UseCookieAuthentication(new CookieAuthenticationOptions());
-
-
 
             // Configure MVC routes
             app.UseMvc(routes =>

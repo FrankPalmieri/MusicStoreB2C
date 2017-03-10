@@ -17,6 +17,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System.Dynamic;
 using System.Collections;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace MusicStoreB2C.App_Start
 {
@@ -24,6 +25,7 @@ namespace MusicStoreB2C.App_Start
     {
         private static string signUpPolicyId;
         private static string signInPolicyId;
+        private static string signInShortPolicyId;
         private static string signUpOrInPolicyId;
         private static string profilePolicyId;
         private static string resetPasswordPolicyId;
@@ -52,6 +54,7 @@ namespace MusicStoreB2C.App_Start
 
         public static string SignUpPolicyId { get { return signUpPolicyId; } set { signUpPolicyId = value; } }
         public static string SignInPolicyId { get { return signInPolicyId; } set { signInPolicyId = value; } }
+        public static string SignInShortPolicyId { get { return signInShortPolicyId; } set { signInShortPolicyId = value; } }
         public static string SignUpOrInPolicyId { get { return signUpOrInPolicyId; } set { signUpOrInPolicyId = value; } }
         public static string ProfilePolicyId { get { return profilePolicyId; } set { profilePolicyId = value; } }
         public static string ResetPasswordPolicyId { get { return resetPasswordPolicyId; } set { resetPasswordPolicyId = value; } }
@@ -82,6 +85,7 @@ namespace MusicStoreB2C.App_Start
             // B2C policy identifiers
             SignUpPolicyId = Configuration["AzureAD:SignUpPolicyId"];
             SignInPolicyId = Configuration["AzureAD:SignInPolicyId"];
+            SignInShortPolicyId = Configuration["AzureAD:SignInShortPolicyId"];
             SignUpOrInPolicyId = Configuration["AzureAD:SignUpOrInPolicyId"];
             ProfilePolicyId = Configuration["AzureAD:ProfileEditingPolicyId"];
             ResetPasswordPolicyId = Configuration["AzureAD:ResetPasswordPolicyId"];
@@ -92,6 +96,10 @@ namespace MusicStoreB2C.App_Start
             app.UseOpenIdConnectAuthentication(CreateOptionsFromPolicy(SignUpOrInPolicyId, true));
             app.UseOpenIdConnectAuthentication(CreateOptionsFromPolicy(ProfilePolicyId));
             app.UseOpenIdConnectAuthentication(CreateOptionsFromPolicy(ResetPasswordPolicyId));
+
+            app.UseJwtBearerAuthentication(CreateBearerOptionsFromPolicy(SignInPolicyId));
+            app.UseJwtBearerAuthentication(CreateBearerOptionsFromPolicy(SignInShortPolicyId));
+            app.UseJwtBearerAuthentication(CreateBearerOptionsFromPolicy(SignUpOrInPolicyId));
 
             b2cGraph = new B2CGraphClient(ActiveDirB2C.ClientId, ActiveDirB2C.ClientSecret, ActiveDirB2C.Tenant);
         }
@@ -111,6 +119,8 @@ namespace MusicStoreB2C.App_Start
                 // set the authentication type to the id of the policy
                 MetadataAddress = string.Format(AadInstance, Tenant, policy),
                 AuthenticationScheme = policy,
+                // true indicates this policy should be used for automatic challenges 
+                // when user tries to access a resource and they are not signed in
                 AutomaticChallenge = automaticChallenge,
                 Authority = authority,
                 CallbackPath = new PathString(string.Format("/{0}", policy)),
@@ -125,16 +135,16 @@ namespace MusicStoreB2C.App_Start
 
                 Events = new OpenIdConnectEvents
                 {
-                    OnAuthenticationFailed = AuthenticationFailed,
+                    OnAuthenticationFailed = OpenIdAuthenticationFailed,
                     OnAuthorizationCodeReceived = AuthorizationCodeReceived,
-                    OnMessageReceived = MessageReceived,
+                    OnMessageReceived = OpenIdMessageReceived,
                     OnRedirectToIdentityProvider = RedirectToIdentityProvider,
                     OnRedirectToIdentityProviderForSignOut = RedirectToIdentityProviderForSignOut,
                     OnRemoteSignOut = RemoteSignOut,
                     OnRemoteFailure = RemoteFailure,
                     OnTicketReceived = TicketReceived,
                     OnTokenResponseReceived = TokenResponseReceived,
-                    OnTokenValidated = TokenValidated,
+                    OnTokenValidated = OpenIdTokenValidated,
                     OnUserInformationReceived = UserInformationReceived,
                 },
                 //
@@ -148,6 +158,7 @@ namespace MusicStoreB2C.App_Start
                 TokenValidationParameters = new TokenValidationParameters
                 {
                     NameClaimType = "name",
+                    SaveSigninToken = true
                 },
                 GetClaimsFromUserInfoEndpoint = true,
                 SaveTokens = true
@@ -155,13 +166,69 @@ namespace MusicStoreB2C.App_Start
             return options;
         }
 
+        // https://stormpath.com/blog/token-authentication-asp-net-core
+        // https://blogs.msdn.microsoft.com/hmahrt/2017/03/06/azure-active-directory-b2c-build-an-asp-net-core-mvc-web-api/
+
+        public JwtBearerOptions CreateBearerOptionsFromPolicy(string policy)
+        {
+            TokenValidationParameters tvps = new TokenValidationParameters
+            {
+                // This is where you specify that your API only accepts tokens from its own clients
+                ValidAudience = clientId,
+                AuthenticationType = policy,
+                // Validate the JWT Issuer (iss) claim
+                ValidateIssuer = true,
+                ValidIssuer = "https://login.microsoftonline.com/454e32fa-c294-4055-a7ec-29d58738a2d4/v2.0/",
+                // Validate the JWT Audience (aud) claim
+                ValidateAudience = true,
+                ValidAudiences = new System.Collections.Generic.List<string>{ "7ff75894-9f7b-4260-9bfa-f6451cc5c504", },
+            };
+
+            JwtBearerOptions jbo = new JwtBearerOptions
+            {
+                AutomaticAuthenticate = true,
+                AutomaticChallenge = true,
+                TokenValidationParameters = tvps,
+                Events = new JwtBearerEvents()
+                {
+                    OnAuthenticationFailed = JwtBearerAuthenticationFailed,
+                    OnChallenge = JwtBearerChallenge,
+                    OnMessageReceived = JwtBearerMessageReceived,
+                    OnTokenValidated = JwtBearerTokenValidated
+                },
+                MetadataAddress = string.Format(AadInstance, Tenant, policy),
+                Audience = ClientId,
+            };
+            return jbo;
+        }
+
+        private Task JwtBearerAuthenticationFailed(Microsoft.AspNetCore.Authentication.JwtBearer.AuthenticationFailedContext arg)
+        {
+            _logger.LogDebug("JwtBearerAuthenticationFailed!");
+            return Task.FromResult(0);
+        }
+        private Task JwtBearerChallenge(JwtBearerChallengeContext arg)
+        {
+            _logger.LogDebug("JwtBearerChallenge!");
+            return Task.FromResult(0);
+        }
+        private Task JwtBearerMessageReceived(Microsoft.AspNetCore.Authentication.JwtBearer.MessageReceivedContext arg)
+        {
+            _logger.LogDebug("JwtBearerMessageReceived!");
+            return Task.FromResult(0);
+        }
+        private Task JwtBearerTokenValidated(Microsoft.AspNetCore.Authentication.JwtBearer.TokenValidatedContext arg)
+        {
+            _logger.LogDebug("JwtBearerTokenValidated!");
+            return Task.FromResult(0);
+        }
         private Task UserInformationReceived(UserInformationReceivedContext context)
         {
             _logger.LogDebug("UserInformationReceived!");
             return Task.FromResult(0);
         }
 
-        private async Task TokenValidated(TokenValidatedContext context)
+        private async Task OpenIdTokenValidated(Microsoft.AspNetCore.Authentication.OpenIdConnect.TokenValidatedContext context)
         {
             _logger.LogDebug("TokenValidated!");
 
@@ -209,7 +276,7 @@ namespace MusicStoreB2C.App_Start
             return Task.FromResult(0);
         }
 
-        private Task MessageReceived(MessageReceivedContext context)
+        private Task OpenIdMessageReceived(Microsoft.AspNetCore.Authentication.OpenIdConnect.MessageReceivedContext context)
         {
             _logger.LogDebug("MessageReceived!");
             return Task.FromResult(0);
@@ -283,7 +350,7 @@ namespace MusicStoreB2C.App_Start
 
 
 
-        private Task AuthenticationFailed(AuthenticationFailedContext context)
+        private Task OpenIdAuthenticationFailed(Microsoft.AspNetCore.Authentication.OpenIdConnect.AuthenticationFailedContext context)
         {
             _logger.LogDebug("AuthenticationFailed!");
             return Task.FromResult(0);

@@ -42,6 +42,7 @@
                     <li><a asp-area="" asp-controller="Home" asp-action="Index">Home</a></li>
                     <li><a asp-area="" asp-controller="Home" asp-action="About">About</a></li>
                     <li><a asp-area="" asp-controller="Home" asp-action="Contact">Contact</a></li>
+                    <li><a asp-area="" asp-controller="TasksUI" asp-action="Index">Tasks</a></li>
                     @await Component.InvokeAsync("GenreMenu")
                     @await Component.InvokeAsync("CartSummary")
                 </ul>
@@ -53,7 +54,7 @@
         @RenderBody()
         <hr />
         <footer>
-            <p><a href="https://www.github.com/aspnet/MusicStore">www.github.com/aspnet/MusicStore</a></p>
+            <p><a href="https://github.com/FrankPalmieri/MusicStoreB2C">https://github.com/FrankPalmieri/MusicStoreB2C</a></p>
             <small>@Html.ActionLink("admin", "Index", "StoreManager", new { area = "Admin" })</small>
             <p>&copy; 2017 - MusicStoreB2C</p>
         </footer>

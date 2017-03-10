@@ -188,6 +188,7 @@ namespace MusicStoreClient
 
                 // TODO This doesn't seem correct - user is not setup on the server side - we want to use a code token
                 // not sure if we need the ID token too or if the user is in the code token
+                // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.AccessToken);
                 httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", b2cUser.IDToken);
 
                 // Send Todo item as Json in Body, to POST to the todo list web api.
@@ -263,6 +264,7 @@ namespace MusicStoreClient
 
                 // Once the token has been returned by ADAL, add it to the http authorization header, before making the call to access the To Do list service.
                 // httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.AccessToken);
+                httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", b2cUser.IDToken);
 
                 // Call the To Do list service.
                 HttpResponseMessage response = await httpClient.GetAsync(todoListBaseAddress + "/api/todo");

@@ -7,11 +7,14 @@ using MusicStoreB2C.Models;
 using MusicStoreB2C.Filters;
 using Microsoft.AspNetCore.Diagnostics;
 using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authorization;
+using System.Net;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace MusicStoreB2C.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ValidateModel]
     public class TodoController : Controller
@@ -27,7 +30,10 @@ namespace MusicStoreB2C.Controllers
         [HttpGet]
         public IEnumerable<TodoItem> GetAll()
         {
-            return _todoRepository.GetAll();
+            // return _todoRepository.GetAll();
+            string owner = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+            IEnumerable<Models.TodoItem> toDos = _todoRepository.GetAll().Where(t => t.Owner == owner);
+            return toDos;
         }
 
 
@@ -50,6 +56,13 @@ namespace MusicStoreB2C.Controllers
             {
                 return BadRequest(new ApiError { Message = "No item found in body" });
             }
+            if (item.Name == null || item.Name == string.Empty)
+                throw new WebException("Please provide a todo name");
+
+            string owner = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+            item.Owner = owner;
+            item.IsComplete = false;
+            item.DateModified = DateTime.UtcNow;
 
             _todoRepository.Add(item);
 
@@ -97,11 +110,13 @@ namespace MusicStoreB2C.Controllers
             if (isComplete != null)
             {
                 todo.IsComplete = isComplete.Value<bool>();
+                todo.DateModified = DateTime.UtcNow;
             }
             var name = item["name"];
             if (name != null)
             {
                 todo.Name = item["name"].Value<string>();
+                todo.DateModified = DateTime.UtcNow;
             }
 
             _todoRepository.Update(todo);
@@ -119,7 +134,12 @@ namespace MusicStoreB2C.Controllers
             {
                 return NotFound(new ItemError { Key = id });
             }
-
+            string owner = User.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+            // Todo - allow admin to delete any item
+            if (todo.Owner != owner)
+            {
+                return BadRequest(new ApiError { Message = "No item found in body or item key does not match id" });
+            }
             _todoRepository.Remove(id);
             return new NoContentResult();
         }

@@ -15,6 +15,7 @@ namespace MusicStoreB2C.Models
         public string Name { get; set; }
         public string Owner { get; set; }
         public bool IsComplete { get; set; }
+        public DateTime DateModified { get; set; }
     }
 
     public class ItemError
